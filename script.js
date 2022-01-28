@@ -1,63 +1,28 @@
-const peer = new Peer(
-    '' +
-        Math.floor(Math.random() * 2 ** 18)
-            .toString(36)
-            .padStart(4, 0),
-    {
-        host: location.hostname,
-        debug: 1,
-        path: './',
-    }
-)
 
-window.peer = peer
-
-function getLocalStream() {
-    navigator.mediaDevices
-        .getUserMedia({ video: false, audio: true })
-        .then((stream) => {
-            window.localStream = stream // A
-            window.localAudio.srcObject = stream // B
-            window.localAudio.autoplay = true // C
-        })
-        .catch((err) => {
-            console.log('u got an error:' + err)
-        })
-}
-
-getLocalStream()
-
-
-const audioContainer = document.querySelector('.call-container');/**
- * Displays the call button and peer ID
- * @returns{void}
- */
-
-function showCallContent() {
-    window.caststatus.textContent = `Your device ID is: ${peer.id}`;
-    callBtn.hidden = false;
-    audioContainer.hidden = true;
-}
-
-/**
- * Displays the audio controls and correct copy
- * @returns{void}
- */
-
-function showConnectedContent() {
-    window.caststatus.textContent = `You're connected`;
-    callBtn.hidden = true;
-    audioContainer.hidden = false;
-}
-
-peer.on('open', function () {
-    window.caststatus.textContent = `Your device ID is: ${peer.id}`;
+const peer = new Peer(''+Math.random().toString(36).substr(2, 5), {
+    host: location.hostname,
+    debug: 1,
+    path: './'
 });
 
-let code;
-function getStreamCode() {
-    code = window.prompt('Please enter the sharing code');
-}
+var recvId = document.getElementById("receiver-id");
+
+
+
+peer.on('open', function () {
+    if (peer.id === null) {
+        console.log('Received null id from peer open');
+        peer.id = lastPeerId;
+    } else {
+        lastPeerId = peer.id;
+    }
+
+    console.log('ID: ' + peer.id);
+    recvId.innerHTML = "My ID: " + peer.id;
+    status.innerHTML = "Awaiting connection...";
+});
+
+
 
 let conn;
 function connectPeers() {
