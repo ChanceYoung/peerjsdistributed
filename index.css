@@ -1,76 +1,75 @@
-*, *:before, *:after {
-    box-sizing: border-box;
-}
-
 body {
-    color: darkslategrey;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: antiquewhite;
+    font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
+    background-color: white;
+	min-width: 450px;
 }
 
 h1 {
-    font-size: 6rem;
-    letter-spacing: 0.2rem;
-    margin-bottom: auto;
+    font-size: 1.75em;
 }
 
-p {
+h2 {
     text-align: center;
-    font-size: 2rem;
+    font-size: 4em; 
 }
 
-button {
-    background-color: -internal-light-dark(white, black);
-    padding: 1rem 10rem;
-    border-radius: 3rem;
-    border: none;
-    cursor: pointer;
+td {
+    width: 50%;
 }
 
-.call-btn {
-    background-color: darkslategrey;
-    color: antiquewhite;
-    font-size: 3rem;
-    margin-left: 7rem;
+input {
+	margin-bottom: 5px;
 }
 
-.hangup-btn {
-    background-color: darkred;
-    color: white;
-    font-size: 1.5rem;
-    margin-left: 6rem;
-    margin-top: 4rem;
+a:visited{ 
+	color: blue; 
 }
 
-.modal {
-    padding: 5rem;
-    background-color: whitesmoke;
-    border-radius: 2rem;
-    width: 40rem;
-    height: 20rem;
+.display {
+    width: 100%;
+    min-height: 400px;
+    padding-bottom: 20px;
 }
 
-.inner-modal {
-    text-align: center;
+.control {
+    width: 100%;
+    padding-bottom: 20px;
 }
 
-.modal label {
-    font-size: 1.5rem;
-}
-.modal input {
-    margin: 1rem 7rem 3rem;
-    display: block;
-    padding: 1rem;
-    border-radius: 3rem;
-    box-shadow:0 0 15px 4px rgba(0,0,0,0.19);
-    border: none;
-    width:50%;
+.control-button {
+    width: 100%;
+    min-height: 50px;
 }
 
-.connect-btn {
-    background-color: #0c1d1d;
-    color: whitesmoke;
-    font-size: 1.5rem;
+.display-box {
+    border: 2px solid black;
+}
+
+.title {
+    vertical-align: top;
+}
+
+
+.hidden {
+    visibility: hidden;
+}
+
+.no-display {
+    display: none;
+}
+
+.msg-time {
+    color: blue;
+}
+
+.cueMsg {
+    color: orange;
+}
+
+.selfMsg {
+    color: green;
+}
+
+.peerMsg {
+    color: red;
 }
