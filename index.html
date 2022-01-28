@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width">
-        <title>Peer-to-Peer Cue System</title>
+        <title>Peer-to-Peer Chat System</title>
         <link rel="stylesheet" href="index.css">
 
         <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
@@ -11,7 +11,7 @@
         <script src="script.js" defer></script>
     </head>
     <body>
-        <h1>Peer-to-Peer Cue System</h1>
+        <h1>Peer-to-Peer Chat System</h1>
 
         <table class="control">
             <tr>
@@ -23,6 +23,7 @@
                     <div id="my-id" style="font-weight: bold;" title="Copy this ID to send message"> My ID:</div>
                     <span style="font-weight: bold">Peer ID: </span>
                     <input type="text" id="receiver-id" title="Input the ID from receive.html">
+                    <button id="add-button">Add to Group</button>
                     <button id="connect-button">Connect</button>
                 </td>
                 <td>

@@ -9,8 +9,10 @@ var message = document.getElementById('message')
 var sendMessageBox = document.getElementById('sendMessageBox')
 var sendButton = document.getElementById('sendButton')
 var clearMsgsButton = document.getElementById('clearMsgsButton')
+var addpeeridButton = document.getElementById('add-button')
 var connectButton = document.getElementById('connect-button')
 var cueString = '<span class="cueMsg">Cue: </span>'
+var connectedtome = []
 
 function initialize() {
     // Create own peer object with connection to shared PeerJS server
@@ -34,19 +36,17 @@ function initialize() {
     })
 
     peer.on('connection', function (c) {
-        // Allow only a single connection
-        // if (conn && conn.open) {
-        //     c.on('open', function() {
-        //         c.send("Already connected to another client");
-        //         setTimeout(function() { c.close(); }, 500);
-        //     });
-        //     return;
-        // }
-
-        conn = c
-        console.log('Connected to: ' + conn.peer)
-        statusInput.innerHTML = 'Connected to: ' + conn.peer
-        ready() // Start listening for data
+        let indx = connectedtome.indexOf(c)
+        if (indx === -1) connectedtome.push(c)
+        console.log(connectedtome)
+        indx = connectedtome.indexOf(c)
+        console.log('Connected to: ' + connectedtome[indx].peer)
+        statusInput.innerHTML =
+            '<br/>' +
+            statusInput.innerHTML +
+            'Connected to: ' +
+            connectedtome[indx].peer +
+            ready() // Start listening for data
     })
 
     peer.on('disconnected', function () {
@@ -69,6 +69,15 @@ function initialize() {
     })
 }
 
+let groupconnections = []
+
+const managepeerlist = () => {
+    let indx = groupconnections.indexOf(recvIdInput.value)
+    if (indx === -1) groupconnections.push(recvIdInput.value)
+    recvIdInput.value = ''
+    console.log(groupconnections)
+}
+
 function join() {
     // Close old connection
     if (conn) {
@@ -76,51 +85,58 @@ function join() {
     }
 
     // Create connection to destination peer specified in the input field
-    conn = peer.connect(recvIdInput.value, {
-        reliable: true,
+    groupconnections.forEach((id) => {
+        let indx = connectedtome.findIndex(
+            (id, index) => connectedtome[index].peer === id
+        )
+        if (indx === -1)
+            connectedtome.push(peer.connect(id, { reliable: true }))
     })
+    console.log(connectedtome)
+    // conn = peer.connect(recvIdInput.value, {
+    //     reliable: true,
+    // })
+    connectedtome.forEach((conn) => {
+        conn.on('open', function () {
+            statusInput.innerHTML =
+                statusInput.innerHTML + 'Connected to: ' + conn.peer
+            console.log('Connected to: ' + conn.peer)
+        })
 
-    conn.on('open', function () {
-        statusInput.innerHTML = 'Connected to: ' + conn.peer
-        console.log('Connected to: ' + conn.peer)
-        recvIdInput.value = ''
+        // Handle incoming data (messages only since this is the signal sender)
+        conn.on('data', function (data) {
+            addMessage(`<span class=\"peerMsg\">${conn.peer}:</span> ${data}`)
+        })
 
-        // Check URL params for comamnds that should be sent immediately
-        var command = getUrlParam('command')
-        if (command) conn.send(command)
-    })
-
-    // Handle incoming data (messages only since this is the signal sender)
-    conn.on('data', function (data) {
-        addMessage(`<span class=\"peerMsg\">${conn.peer}:</span> ${data}`)
-    })
-
-    conn.on('close', function () {
-        statusInput.innerHTML = 'Connection closed'
+        conn.on('close', function () {
+            statusInput.innerHTML = 'Connection closed'
+        })
     })
 }
 
 function ready() {
-    conn.on('data', function (data) {
-        console.log('Data recieved')
-        addMessage(`<span class=\"peerMsg\"> ${conn.peer}: </span> ${data}`)
-    })
+    connectedtome.forEach((conn) => {
+        conn.on('data', function (data) {
+            console.log('Data recieved')
+            addMessage(`<span class=\"peerMsg\"> ${conn.peer}: </span> ${data}`)
+        })
 
-    conn.on('close', function () {
-        statusInput.innerHTML = 'Connection reset<br>Awaiting connection...'
-        conn = null
+        conn.on('close', function () {
+            statusInput.innerHTML = 'Connection reset<br>Awaiting connection...'
+            conn = null
+        })
     })
 }
 
-function signal(sigName) {
-    if (conn && conn.open) {
-        conn.send(sigName)
-        console.log(sigName + ' signal sent')
-        addMessage(cueString + sigName)
-    } else {
-        console.log('Connection is closed')
-    }
-}
+// function signal(sigName) {
+//     if (conn && conn.open) {
+//         conn.send(sigName)
+//         console.log(sigName + ' signal sent')
+//         addMessage(cueString + sigName)
+//     } else {
+//         console.log('Connection is closed')
+//     }
+// }
 
 function addMessage(msg) {
     var now = new Date()
@@ -161,10 +177,10 @@ sendMessageBox.addEventListener('keypress', function (e) {
 
 // Send message
 sendButton.addEventListener('click', function () {
-    if (conn && conn.open) {
+    if (connectedtome.length >= 1) {
         var msg = sendMessageBox.value
         sendMessageBox.value = ''
-        conn.send(msg)
+        connectedtome.forEach((c) => c.send(msg))
         console.log('Sent: ' + msg)
         addMessage('<span class="selfMsg">Self: </span> ' + msg)
     } else {
@@ -175,6 +191,7 @@ sendButton.addEventListener('click', function () {
 // Clear messages box
 clearMsgsButton.addEventListener('click', clearMessages)
 
+addpeeridButton.addEventListener('click', managepeerlist)
 // Start peer connection on click
 connectButton.addEventListener('click', join)
 
