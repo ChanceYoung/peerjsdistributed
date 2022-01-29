@@ -1,6 +1,5 @@
  var lastPeerId = null;
  var peer = null; // own peer object
- var conn = null;
  var myIdInput = document.getElementById("my-id");
  var recvIdInput = document.getElementById("receiver-id");
  var statusInput = document.getElementById("status");
@@ -12,7 +11,7 @@
  var connectButton = document.getElementById("connect-button");
  var cueString = "<span class=\"cueMsg\">Cue: </span>";
 
-var connectionList = []
+var connectionList = new Set();
 
 function initialize() {
     // Create own peer object with connection to shared PeerJS server
@@ -36,19 +35,7 @@ function initialize() {
     });
     
     peer.on('connection', function (c) {
-        // Allow only a single connection
-        // if (conn && conn.open) {
-        //     c.on('open', function() {
-        //         c.send("Already connected to another client");
-        //         setTimeout(function() { c.close(); }, 500);
-        //     });
-        //     return;
-        // }
-
-        conn = c;
-        console.log("Connected to: " + conn.peer);
-        statusInput.innerHTML = "Connected to: " + conn.peer;
-        ready() // Start listening for data
+        ready(c) // Start listening for data
     });
 
     peer.on('disconnected', function () {
@@ -67,37 +54,22 @@ function initialize() {
     });
     peer.on('error', function (err) {
         console.log(err);
-        alert('' + err);
     });
 };
 
 
 function join() {
-    // Close old connection
-    if (conn) {
-        conn.close();
-    }
 
     // Create connection to destination peer specified in the input field
-    conn = peer.connect(recvIdInput.value, {
+    var conn = peer.connect(recvIdInput.value, {
         reliable: true
     });
-
-    let index = connectionList.indexOf(conn)
-
-    if(index == -1){
-        connectionList.push(conn)
-    }
 
     conn.on('open', function () {
         statusInput.innerHTML = "Connected to: " + conn.peer;
         console.log("Connected to: " + conn.peer);
         recvIdInput.value = "";
-
-        // Check URL params for comamnds that should be sent immediately
-        var command = getUrlParam("command");
-        if (command)
-            conn.send(command);
+        connectionList.add(conn);
     });
 
     // Handle incoming data (messages only since this is the signal sender)
@@ -111,7 +83,22 @@ function join() {
 
 };
 
-function ready() {
+function ready(conn) {
+    conn.on('open', function() {
+        const answerRequest = confirm(`Do you want to connect with ${conn.peer}?`) // A
+
+        if(answerRequest){ 
+            conn.send('Friend request accepted'); // B
+            console.log("Connected to: " + conn.peer);
+            statusInput.innerHTML = "Connected to: " + conn.peer;
+            connectionList.add(conn);
+        } else {
+            conn.send('Friend request rejected'); // C
+            conn.close();
+            console.log("call denied"); // E
+        }
+
+    })
     conn.on('data', function (data) {
         console.log("Data recieved");
         addMessage(`<span class=\"peerMsg\"> ${conn.peer}: </span> ${data}`);
@@ -158,9 +145,10 @@ sendMessageBox.addEventListener('keypress', function (e) {
 
 // Send message
 sendButton.addEventListener('click', function () {
-    if (conn && conn.open) {
+    if (connectionList) {
         var msg = sendMessageBox.value;
         sendMessageBox.value = "";
+        console.log("sending messages to " + [...connectionList].join(' '));
         connectionList.forEach(c => c.send(msg))
         // conn.send(msg);
         console.log("Sent: " + msg);
