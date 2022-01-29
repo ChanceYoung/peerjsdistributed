@@ -12,6 +12,7 @@
  var connectButton = document.getElementById("connect-button");
  var cueString = "<span class=\"cueMsg\">Cue: </span>";
 
+var connectionList = []
 
 function initialize() {
     // Create own peer object with connection to shared PeerJS server
@@ -82,6 +83,12 @@ function join() {
         reliable: true
     });
 
+    let index = connectionList.indexOf(conn)
+
+    if(index == -1){
+        connectionList.push(conn)
+    }
+
     conn.on('open', function () {
         statusInput.innerHTML = "Connected to: " + conn.peer;
         console.log("Connected to: " + conn.peer);
@@ -114,17 +121,6 @@ function ready() {
         statusInput.innerHTML = "Connection reset<br>Awaiting connection...";
         conn = null;
     });
-}
-
-
-function signal(sigName) {
-    if (conn && conn.open) {
-        conn.send(sigName);
-        console.log(sigName + " signal sent");
-        addMessage(cueString + sigName);
-    } else {
-        console.log('Connection is closed');
-    }
 }
 
 
@@ -165,7 +161,8 @@ sendButton.addEventListener('click', function () {
     if (conn && conn.open) {
         var msg = sendMessageBox.value;
         sendMessageBox.value = "";
-        conn.send(msg);
+        connectionList.forEach(c => c.send(msg))
+        // conn.send(msg);
         console.log("Sent: " + msg);
         addMessage("<span class=\"selfMsg\">Self: </span> " + msg);
     } else {
