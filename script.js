@@ -6,12 +6,13 @@
  var message = document.getElementById("message");
 
  var sendMessageBox = document.getElementById("sendMessageBox");
+ var idBox = document.getElementById("idBox");
  var sendButton = document.getElementById("sendButton");
  var clearMsgsButton = document.getElementById("clearMsgsButton");
  var connectButton = document.getElementById("connect-button");
  var cueString = "<span class=\"cueMsg\">Cue: </span>";
 
-var connectionList = new Set();
+var connectionList = {};
 
 function initialize() {
     // Create own peer object with connection to shared PeerJS server
@@ -31,7 +32,7 @@ function initialize() {
     
         console.log('ID: ' + peer.id);
         myIdInput.innerHTML = "My ID: " + peer.id;
-        statusInput.innerHTML = "Awaiting connection...";
+        // statusInput.innerHTML = "Awaiting connection...";
     });
     
     peer.on('connection', function (c) {
@@ -66,19 +67,35 @@ function join() {
     });
 
     conn.on('open', function () {
-        statusInput.innerHTML = "Connected to: " + conn.peer;
-        console.log("Connected to: " + conn.peer);
+        statusInput.innerHTML = statusInput.innerHTML + "<br></br> Connected to: " + conn.peer;
         recvIdInput.value = "";
-        connectionList.add(conn);
+        connectionList[conn.peer] = conn;
     });
 
     // Handle incoming data (messages only since this is the signal sender)
     conn.on('data', function (data) {
+        //q7okd: fto: dki34-sdf
+        if(data.includes('fto:')){
+            var forwardTo = data.split('fto: ')[1].split('-')[0].trim();
+            var messageToForward = data.split('fto: ')[1].split('-')[1];
+            console.log(`forward to inside: ${forwardTo} ${messageToForward}`);
+
+            // console.log(connectionList.values);
+
+            for(var key in connectionList) {
+                console.log(key);
+                if(key == forwardTo){
+                    connectionList[key].send(messageToForward + ' os:' + conn.peer);
+                    console.log("Sending message to: " + key);
+                }
+            }
+        }
+
         addMessage(`<span class=\"peerMsg\">${conn.peer}:</span> ${data}`);
     });
 
     conn.on('close', function () {
-        statusInput.innerHTML = "Connection closed";
+        statusInput.innerHTML = statusInput.innerHTML + `<br></br> Connection closed with ${conn.peer}`;
     });
 
 };
@@ -90,8 +107,8 @@ function ready(conn) {
         if(answerRequest){ 
             conn.send('Friend request accepted'); // B
             console.log("Connected to: " + conn.peer);
-            statusInput.innerHTML = "Connected to: " + conn.peer;
-            connectionList.add(conn);
+            statusInput.innerHTML = statusInput.innerHTML +  "<br></br>  Connected to: " + conn.peer;
+            connectionList[conn.peer] = conn;
         } else {
             conn.send('Friend request rejected'); // C
             conn.close();
@@ -100,12 +117,28 @@ function ready(conn) {
 
     })
     conn.on('data', function (data) {
-        console.log("Data recieved");
+        console.log(`recived from ${conn.peer}`, data);
+        //q7okd: forward to: dki34 sdf
+        if(data.includes('fto:')){
+            var forwardTo = data.split('fto:')[1].split(' ')[0];
+            var messageToForward = data.split('fto:')[1].split(' ')[1];
+            console.log(`forward to inside: ${forwardTo} ${messageToForward}`);
+
+            console.log(connectionList.values);
+
+            for(var key in connectionList) {
+                var value = connectionList[key];
+                if(key === forwardTo){
+                    value.send(forwardTo, messageToForward);
+                    console.log("Sending message to: " + key);
+                }
+            }
+        }
         addMessage(`<span class=\"peerMsg\"> ${conn.peer}: </span> ${data}`);
     });
 
     conn.on('close', function () {
-        statusInput.innerHTML = "Connection reset<br>Awaiting connection...";
+        statusInput.innerHTML = statusInput.innerHTML + `<br></br> Connection closed with ${conn.peer}`;
         conn = null;
     });
 }
@@ -148,8 +181,20 @@ sendButton.addEventListener('click', function () {
     if (connectionList) {
         var msg = sendMessageBox.value;
         sendMessageBox.value = "";
-        console.log("sending messages to " + [...connectionList].join(' '));
-        connectionList.forEach(c => c.send(msg))
+
+        // console.log("sending messages to " + [...connectionList].join(' '));
+        // connectionList.values(c => c.send(msg))
+        if(idBox.value === ""){
+            for(var key in connectionList) {
+                var value = connectionList[key];
+                value.send(msg);
+                console.log("Sending message to: " + key);
+            }
+        } else {
+            var id = idBox.value;
+            connectionList[id].send(msg);
+            console.log("Sending message to: " + id);
+        }
         // conn.send(msg);
         console.log("Sent: " + msg);
         addMessage("<span class=\"selfMsg\">Self: </span> " + msg);
